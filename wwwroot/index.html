@@ -1,0 +1,744 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кликер</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .page {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+
+            .page.active {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+        #game-page, #rewards-page, #shop-page, #friends-page, #profile-page {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        #header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 400px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        #nickname-display {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        #profile-button {
+            font-size: 18px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: #007bff;
+        }
+
+        #score, #level, #energy {
+            font-size: 18px;
+            margin: 5px 0;
+            text-align: center;
+        }
+
+        #exp-bar {
+            width: 80%;
+            height: 15px;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        #exp-bar-inner {
+            height: 100%;
+            background-color: #4caf50;
+            width: 0%;
+        }
+
+        #exp-progress {
+            font-size: 14px;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        #click-button {
+            font-size: 22px;
+            padding: 15px 30px;
+            margin: 15px 0;
+            cursor: pointer;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        /* Кнопки улучшений */
+        .upgrade-button {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background-color: #28a745;
+            color: white;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        /* Кнопка рестарта */
+        #reset-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 5px;
+        }
+
+        /* Навигационная панель */
+        #navbar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            background-color: #333;
+            padding: 10px 0;
+        }
+
+            #navbar button {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 16px;
+                cursor: pointer;
+            }
+
+                #navbar button.active {
+                    border-bottom: 2px solid #fff;
+                }
+
+        /* Модальное окно для ввода никнейма */
+        #nickname-modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        #nickname-modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        #nickname-input {
+            font-size: 16px;
+            padding: 10px;
+            width: 80%;
+            margin-bottom: 10px;
+        }
+
+        #nickname-submit {
+            font-size: 18px;
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <div id="nickname-display"></div>
+        <button id="profile-button">Профиль</button>
+    </div>
+
+    <!-- Игровая страница -->
+    <div id="game-page" class="page active">
+        <div id="score">Очки: 0</div>
+        <div id="level">Уровень: 1</div>
+        <div id="energy">Энергия: 1000</div>
+        <div id="exp-bar">
+            <div id="exp-bar-inner"></div>
+        </div>
+        <div id="exp-progress">0 / 100</div>
+        <button id="click-button">Кликни меня!</button>
+        <button id="reset-button">Сбросить прогресс</button>
+    </div>
+
+    <!-- Страница достижений -->
+    <div id="rewards-page" class="page">
+        <h1>Достижения</h1>
+        <div id="rewards-score">Очки: 0</div>
+        <p>Выполни задания и получи награду!</p>
+        <ul id="achievements-list">
+            <li>Кликни 100 раз - получи 10 энергии.</li>
+            <li>Достигни 2 уровня - получи 50 очков.</li>
+            <li>Потрать 500 очков - получи бонус 100 очков.</li>
+        </ul>
+    </div>
+
+    <!-- Страница магазина -->
+    <div id="shop-page" class="page">
+        <h1>Магазин</h1>
+        <div id="shop-score">Очки: 0</div>
+        <button id="auto-earn-upgrade" class="upgrade-button">Автозаработок очков: Уровень 0, Цена: 100, Бонус: 0 очков/с</button>
+        <button id="click-multiplier-upgrade" class="upgrade-button">Множитель кликов: Уровень 0, Цена: 200, Бонус: x1</button>
+        <button id="energy-regen-upgrade" class="upgrade-button">Регенерация энергии: Уровень 0, Цена: 300, Бонус: 1 энергия/5с</button>
+    </div>
+
+    <!-- Страница друзей -->
+    <div id="friends-page" class="page">
+        <h1>Друзья</h1>
+        <div>
+            <h3>Ваши друзья:</h3>
+            <ul id="friends-list"></ul>
+        </div>
+        <div>
+            <h3>Добавить друга по идентификатору:</h3>
+            <input type="text" id="friend-id-input" placeholder="Введите идентификатор друга">
+            <button id="add-friend-button">Добавить</button>
+        </div>
+    </div>
+
+    <!-- Страница профиля -->
+    <div id="profile-page" class="page">
+        <h1>Ваш Профиль</h1>
+        <p>Никнейм: <span id="profile-nickname"></span></p>
+        <p>Заработанные достижения: <span id="profile-achievements">0</span></p>
+        <p>Ваш идентификатор: <span id="profile-id"></span></p>
+        <p>Реферальная ссылка: <span id="profile-referral"></span></p>
+    </div>
+
+    <!-- Навигационная панель -->
+    <div id="navbar">
+        <button id="game-tab" class="active">Партнёрка</button>
+        <button id="rewards-tab">Достижения</button>
+        <button id="shop-tab">Магазин</button>
+        <button id="friends-tab">Друзья</button>
+    </div>
+
+    <!-- Модальное окно для ввода никнейма -->
+    <div id="nickname-modal">
+        <div id="nickname-modal-content">
+            <h2>Введите свой никнейм</h2>
+            <input type="text" id="nickname-input" placeholder="Ваш никнейм">
+            <button id="nickname-submit">Сохранить</button>
+        </div>
+    </div>
+
+    <script>
+        let score = 0;
+        let level = 1;
+        let experience = 0;
+        let energy = 1000;
+        let autoEarnLevel = 0;
+        let clickMultiplierLevel = 0;
+        let energyRegenLevel = 0;
+        let clicks = 0;
+        let spentPoints = 0;
+
+        let achievementClick100 = false;
+        let achievementLevel2 = false;
+        let achievementSpend500 = false;
+
+        let friends = [];
+
+        const maxEnergy = 1000;
+        const energyRegenRateBase = 5 * 1000; // Восстановление 1 энергии каждые 5 секунд
+        let energyRegenRate = energyRegenRateBase; // Может меняться при апгрейдах
+        const expBase = 100; // Базовое количество опыта для 1 уровня
+        const expGrowthFactor = 1.2; // Коэффициент роста для экспоненциального увеличения опыта
+        const growthFactor = 1.2; // Коэффициент экспоненциального роста цен
+
+        const scoreKey = "userScore";
+        const levelKey = "userLevel";
+        const expKey = "userExperience";
+        const energyKey = "userEnergy";
+        const nicknameKey = "userNickname";
+        const idKey = "userId";
+        const achievementsKey = "userAchievements";
+        const autoEarnLevelKey = "autoEarnLevel";
+        const clickMultiplierLevelKey = "clickMultiplierLevel";
+        const energyRegenLevelKey = "energyRegenLevel";
+        const clicksKey = "userClicks";
+        const spentPointsKey = "spentPoints";
+        const achievementClick100Key = "achievementClick100";
+        const achievementLevel2Key = "achievementLevel2";
+        const achievementSpend500Key = "achievementSpend500";
+        const friendsKey = "userFriends";
+
+        // Функция для генерации уникального идентификатора
+        function generateId() {
+            return 'ID-' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Функция для загрузки сохраненных данных
+        function loadGameData() {
+            const savedScore = localStorage.getItem(scoreKey);
+            const savedLevel = localStorage.getItem(levelKey);
+            const savedExp = localStorage.getItem(expKey);
+            const savedEnergy = localStorage.getItem(energyKey);
+            const savedClicks = localStorage.getItem(clicksKey);
+            const savedSpentPoints = localStorage.getItem(spentPointsKey);
+            const savedFriends = JSON.parse(localStorage.getItem(friendsKey)) || [];
+            achievementClick100 = localStorage.getItem(achievementClick100Key) === 'true';
+            achievementLevel2 = localStorage.getItem(achievementLevel2Key) === 'true';
+            achievementSpend500 = localStorage.getItem(achievementSpend500Key) === 'true';
+            const savedNickname = localStorage.getItem(nicknameKey);
+            const savedAutoEarnLevel = localStorage.getItem(autoEarnLevelKey);
+            const savedClickMultiplierLevel = localStorage.getItem(clickMultiplierLevelKey);
+            const savedEnergyRegenLevel = localStorage.getItem(energyRegenLevelKey);
+            let savedId = localStorage.getItem(idKey);
+
+            if (savedScore !== null) {
+                score = parseInt(savedScore);
+                document.getElementById('score').textContent = 'Очки: ' + score;
+            }
+
+            if (savedLevel !== null) {
+                level = parseInt(savedLevel);
+                document.getElementById('level').textContent = 'Уровень: ' + level;
+            }
+
+            if (savedExp !== null) {
+                experience = parseInt(savedExp);
+                updateExpBar();
+            }
+
+            if (savedEnergy !== null) {
+                energy = parseInt(savedEnergy);
+                document.getElementById('energy').textContent = 'Энергия: ' + energy;
+            }
+
+            if (savedClicks !== null) {
+                clicks = parseInt(savedClicks);
+            }
+
+            if (savedSpentPoints !== null) {
+                spentPoints = parseInt(savedSpentPoints);
+            }
+
+            friends = savedFriends;
+
+            if (savedAutoEarnLevel !== null) {
+                autoEarnLevel = parseInt(savedAutoEarnLevel);
+            }
+
+            if (savedClickMultiplierLevel !== null) {
+                clickMultiplierLevel = parseInt(savedClickMultiplierLevel);
+            }
+
+            if (savedEnergyRegenLevel !== null) {
+                energyRegenLevel = parseInt(savedEnergyRegenLevel);
+                energyRegenRate = energyRegenRateBase / (1 + energyRegenLevel);
+                clearInterval(energyRegenInterval);
+                energyRegenInterval = setInterval(regenerateEnergy, energyRegenRate);
+            }
+
+            if (savedNickname !== null) {
+                document.getElementById('nickname-display').textContent = savedNickname;
+            } else {
+                showNicknameModal();
+            }
+
+            if (savedId === null) {
+                savedId = generateId();
+                localStorage.setItem(idKey, savedId);
+            }
+
+            updateProfile(savedNickname, savedId);
+            updateShopButtons();
+            updateAchievementsUI(); // Обновляем отображение достижений
+            updateFriendsUI(); // Обновляем отображение друзей
+        }
+
+        // Функция для расчета требуемого опыта для следующего уровня
+        function calculateNextLevelExp(level) {
+            return Math.floor(expBase * Math.pow(expGrowthFactor, level - 1));
+        }
+
+        // Функция для обновления профиля
+        function updateProfile(nickname, id) {
+            document.getElementById('profile-nickname').textContent = nickname || localStorage.getItem(nicknameKey);
+            document.getElementById('profile-id').textContent = id || localStorage.getItem(idKey);
+            document.getElementById('profile-achievements').textContent = localStorage.getItem(achievementsKey) || 0;
+            document.getElementById('profile-referral').textContent = window.location.href + "?ref=" + id;
+        }
+
+        // Функция для сохранения данных
+        function saveGameData() {
+            localStorage.setItem(scoreKey, score);
+            localStorage.setItem(levelKey, level);
+            localStorage.setItem(expKey, experience);
+            localStorage.setItem(energyKey, energy);
+            localStorage.setItem(autoEarnLevelKey, autoEarnLevel);
+            localStorage.setItem(clickMultiplierLevelKey, clickMultiplierLevel);
+            localStorage.setItem(energyRegenLevelKey, energyRegenLevel);
+            localStorage.setItem(clicksKey, clicks);
+            localStorage.setItem(spentPointsKey, spentPoints);
+            localStorage.setItem(achievementClick100Key, achievementClick100);
+            localStorage.setItem(achievementLevel2Key, achievementLevel2);
+            localStorage.setItem(achievementSpend500Key, achievementSpend500);
+            localStorage.setItem(friendsKey, JSON.stringify(friends));
+        }
+
+        // Функция для обновления полосы опыта и прогресса до следующего уровня
+        function updateExpBar() {
+            const nextLevelExp = calculateNextLevelExp(level);
+            const expBarInner = document.getElementById('exp-bar-inner');
+            const expPercent = (experience / nextLevelExp) * 100;
+            expBarInner.style.width = expPercent + '%';
+            document.getElementById('exp-progress').textContent = `${experience} / ${nextLevelExp}`;
+        }
+
+        // Функция для проверки и повышения уровня
+        function checkLevelUp() {
+            let nextLevelExp = calculateNextLevelExp(level);
+            while (experience >= nextLevelExp) {
+                experience -= nextLevelExp; // Убираем необходимый опыт для текущего уровня
+                level++;
+                nextLevelExp = calculateNextLevelExp(level); // Вычисляем для следующего уровня
+                document.getElementById('level').textContent = 'Уровень: ' + level;
+            }
+            updateExpBar(); // Обновляем полосу опыта для текущего уровня
+        }
+
+        // Функция для восстановления энергии
+        function regenerateEnergy() {
+            if (energy < maxEnergy) {
+                energy++;
+                document.getElementById('energy').textContent = 'Энергия: ' + energy;
+                saveGameData(); // Сохраняем энергию после восстановления
+            }
+        }
+
+        // Функция для автозаработка очков
+        function autoEarnPoints() {
+            score += autoEarnLevel;
+            experience += autoEarnLevel; // Учитываем автозаработок в прогресс уровня
+            document.getElementById('score').textContent = 'Очки: ' + score;
+            document.getElementById('shop-score').textContent = 'Очки: ' + score;
+            document.getElementById('rewards-score').textContent = 'Очки: ' + score;
+            checkLevelUp(); // Проверяем, не пора ли повысить уровень
+            updateExpBar(); // Обновляем полоску опыта после автозаработка
+            checkAchievements(); // Проверяем достижения
+            saveGameData();
+        }
+
+        setInterval(autoEarnPoints, 1000); // Автозаработок очков
+
+        // Функция для расчета цены улучшений
+        function calculatePrice(basePrice, level) {
+            return Math.floor(basePrice * Math.pow(growthFactor, level));
+        }
+
+        // Функция для обновления кнопок в магазине
+        function updateShopButtons() {
+            const autoEarnPrice = calculatePrice(100, autoEarnLevel);
+            const clickMultiplierPrice = calculatePrice(200, clickMultiplierLevel);
+            const energyRegenPrice = calculatePrice(300, energyRegenLevel);
+
+            document.getElementById('auto-earn-upgrade').textContent =
+                `Автозаработок очков: Уровень ${autoEarnLevel}, Цена: ${autoEarnPrice}, Бонус: ${autoEarnLevel} очков/с`;
+            document.getElementById('click-multiplier-upgrade').textContent =
+                `Множитель кликов: Уровень ${clickMultiplierLevel}, Цена: ${clickMultiplierPrice}, Бонус: x${1 + clickMultiplierLevel}`;
+            document.getElementById('energy-regen-upgrade').textContent =
+                `Регенерация энергии: Уровень ${energyRegenLevel}, Цена: ${energyRegenPrice}, Бонус: 1 энергия/${(energyRegenRateBase / (1 + energyRegenLevel)) / 1000}с`;
+        }
+
+        // Функции для покупки улучшений
+        document.getElementById('auto-earn-upgrade').addEventListener('click', function () {
+            const price = calculatePrice(100, autoEarnLevel);
+            if (score >= price) {
+                score -= price;
+                spentPoints += price;
+                autoEarnLevel++;
+                updateShopButtons();
+                checkAchievements(); // Проверяем достижения после покупки
+                saveGameData();
+            }
+        });
+
+        document.getElementById('click-multiplier-upgrade').addEventListener('click', function () {
+            const price = calculatePrice(200, clickMultiplierLevel);
+            if (score >= price) {
+                score -= price;
+                spentPoints += price;
+                clickMultiplierLevel++;
+                updateShopButtons();
+                checkAchievements(); // Проверяем достижения после покупки
+                saveGameData();
+            }
+        });
+
+        document.getElementById('energy-regen-upgrade').addEventListener('click', function () {
+            const price = calculatePrice(300, energyRegenLevel);
+            if (score >= price) {
+                score -= price;
+                spentPoints += price;
+                energyRegenLevel++;
+                energyRegenRate = energyRegenRateBase / (1 + energyRegenLevel);
+                updateShopButtons();
+                clearInterval(energyRegenInterval);
+                energyRegenInterval = setInterval(regenerateEnergy, energyRegenRate);
+                checkAchievements(); // Проверяем достижения после покупки
+                saveGameData();
+            }
+        });
+
+        // Функция для отображения модального окна с вводом никнейма
+        function showNicknameModal() {
+            const modal = document.getElementById('nickname-modal');
+            modal.style.display = 'flex';
+        }
+
+        // Функция для сохранения никнейма
+        function saveNickname() {
+            const nickname = document.getElementById('nickname-input').value;
+            if (nickname) {
+                localStorage.setItem(nicknameKey, nickname);
+                document.getElementById('nickname-display').textContent = nickname;
+                document.getElementById('nickname-modal').style.display = 'none';
+                updateProfile(nickname);
+            } else {
+                alert("Пожалуйста, введите никнейм.");
+            }
+        }
+
+        document.getElementById('nickname-submit').addEventListener('click', saveNickname);
+
+        // Функция для расчета прогресса, пока игрок отсутствовал
+        function calculateIdleProgress() {
+            const lastActiveTime = localStorage.getItem('lastActiveTime');
+            if (lastActiveTime) {
+                const currentTime = Date.now();
+                const timeElapsed = (currentTime - lastActiveTime) / 1000; // Время в секундах
+                const earnedPoints = autoEarnLevel * timeElapsed;
+                score += Math.floor(earnedPoints);
+                experience += Math.floor(earnedPoints);
+                checkLevelUp();
+                updateExpBar();
+                saveGameData();
+                document.getElementById('score').textContent = 'Очки: ' + score;
+                document.getElementById('shop-score').textContent = 'Очки: ' + score;
+                document.getElementById('rewards-score').textContent = 'Очки: ' + score;
+            }
+        }
+
+        // Функция для сохранения текущего времени и состояния игры при уходе игрока
+        function saveGameDataOnExit() {
+            saveGameData();  // Сохраняем текущее состояние игры
+            localStorage.setItem('lastActiveTime', Date.now());  // Сохраняем текущее время
+        }
+
+        // Обработка ухода игрока
+        window.addEventListener('beforeunload', saveGameDataOnExit);
+
+        // Обработка возвращения игрока в игру
+        window.addEventListener('load', function () {
+            loadGameData();  // Загружаем данные игры
+            calculateIdleProgress();  // Рассчитываем idle-прогресс
+        });
+
+        // Функция для рестарта прогресса
+        document.getElementById('reset-button').addEventListener('click', function () {
+            if (confirm("Вы уверены, что хотите сбросить весь прогресс?")) {
+                localStorage.clear(); // Очищаем все данные
+                score = 0;
+                level = 1;
+                experience = 0;
+                energy = 1000;
+                autoEarnLevel = 0;
+                clickMultiplierLevel = 0;
+                energyRegenLevel = 0;
+                clicks = 0;
+                spentPoints = 0;
+                friends = [];
+                achievementClick100 = false;
+                achievementLevel2 = false;
+                achievementSpend500 = false;
+
+                // Обновление отображаемых данных после сброса
+                document.getElementById('score').textContent = 'Очки: ' + score;
+                document.getElementById('level').textContent = 'Уровень: ' + level;
+                document.getElementById('energy').textContent = 'Энергия: ' + energy;
+                updateExpBar(); // Обновляем полоску опыта и текст под ней
+                updateShopButtons(); // Обновляем кнопки в магазине
+                updateAchievementsUI(); // Обновляем достижения
+                updateFriendsUI(); // Обновляем список друзей
+
+                showNicknameModal(); // Показываем модальное окно для ввода никнейма
+
+                saveGameData(); // Сохраняем начальные данные
+            }
+        });
+
+        document.getElementById('click-button').addEventListener('click', function () {
+            if (energy > 0) {
+                clicks++;
+                score += 1 * (1 + clickMultiplierLevel); // Увеличиваем очки с учетом множителя
+                experience += 1 * (1 + clickMultiplierLevel); // Увеличиваем опыт с учетом множителя
+                energy--; // Уменьшаем количество энергии
+
+                // Обновляем значения на странице
+                document.getElementById('score').textContent = 'Очки: ' + score;
+                document.getElementById('energy').textContent = 'Энергия: ' + energy;
+                document.getElementById('shop-score').textContent = 'Очки: ' + score;
+                document.getElementById('rewards-score').textContent = 'Очки: ' + score;
+
+                checkLevelUp(); // Проверяем повышение уровня
+                updateExpBar(); // Обновляем полосу опыта
+
+                checkAchievements(); // Проверяем достижения
+
+                saveGameData(); // Сохраняем состояние игры
+            } else {
+                alert("У вас закончилась энергия! Подождите, пока она восстановится.");
+            }
+        });
+
+        // Таймер для восстановления энергии
+        let energyRegenInterval = setInterval(regenerateEnergy, energyRegenRate);
+
+        // Навигация между страницами
+        const pages = {
+            game: document.getElementById('game-page'),
+            rewards: document.getElementById('rewards-page'),
+            shop: document.getElementById('shop-page'),
+            friends: document.getElementById('friends-page'),
+            profile: document.getElementById('profile-page')
+        };
+
+        const tabs = {
+            game: document.getElementById('game-tab'),
+            rewards: document.getElementById('rewards-tab'),
+            shop: document.getElementById('shop-tab'),
+            friends: document.getElementById('friends-tab')
+        };
+
+        function showPage(pageName) {
+            Object.values(pages).forEach(page => page.classList.remove('active'));
+            pages[pageName].classList.add('active');
+
+            Object.values(tabs).forEach(tab => tab.classList.remove('active'));
+            if (tabs[pageName]) tabs[pageName].classList.add('active');
+        }
+
+        tabs.game.addEventListener('click', () => showPage('game'));
+        tabs.rewards.addEventListener('click', () => showPage('rewards'));
+        tabs.shop.addEventListener('click', () => showPage('shop'));
+        tabs.friends.addEventListener('click', () => showPage('friends'));
+
+        // Открытие страницы профиля при нажатии на кнопку в верхнем меню
+        document.getElementById('profile-button').addEventListener('click', () => showPage('profile'));
+
+        // Функция для проверки достижений
+        function checkAchievements() {
+            // Достижение "Кликни 100 раз"
+            if (!achievementClick100 && clicks >= 100) {
+                achievementClick100 = true;
+                energy += 10; // Награда
+                alert('Достижение разблокировано: Кликни 100 раз! Вы получили 10 энергии.');
+            }
+
+            // Достижение "Достигни 2 уровня"
+            if (!achievementLevel2 && level >= 2) {
+                achievementLevel2 = true;
+                score += 50; // Награда
+                alert('Достижение разблокировано: Достигни 2 уровня! Вы получили 50 очков.');
+            }
+
+            // Достижение "Потрать 500 очков"
+            if (!achievementSpend500 && spentPoints >= 500) {
+                achievementSpend500 = true;
+                score += 100; // Награда
+                alert('Достижение разблокировано: Потрать 500 очков! Вы получили 100 очков.');
+            }
+
+            updateAchievementsUI();
+            saveGameData();
+        }
+
+        // Функция для обновления интерфейса достижений
+        function updateAchievementsUI() {
+            const achievementsList = document.getElementById("achievements-list");
+            achievementsList.innerHTML = `
+                    <li>${achievementClick100 ? '✅' : '❌'} Кликни 100 раз - получи 10 энергии.</li>
+                    <li>${achievementLevel2 ? '✅' : '❌'} Достигни 2 уровня - получи 50 очков.</li>
+                    <li>${achievementSpend500 ? '✅' : '❌'} Потрать 500 очков - получи бонус 100 очков.</li>
+                `;
+        }
+
+        // Функция для обновления списка друзей в интерфейсе
+        function updateFriendsUI() {
+            const friendsList = document.getElementById("friends-list");
+            friendsList.innerHTML = "";
+            friends.forEach(friend => {
+                const li = document.createElement("li");
+                li.textContent = friend;
+                friendsList.appendChild(li);
+            });
+        }
+
+        // Функция для добавления друга
+        document.getElementById('add-friend-button').addEventListener('click', function () {
+            const friendId = document.getElementById('friend-id-input').value;
+            if (friendId && !friends.includes(friendId)) {
+                friends.push(friendId);
+                updateFriendsUI();
+                saveGameData();
+                document.getElementById('friend-id-input').value = "";
+            } else {
+                alert("Некорректный идентификатор или друг уже добавлен.");
+            }
+        });
+
+    </script>
+</body>
+</html>
